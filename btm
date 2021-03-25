@@ -1,0 +1,44 @@
+Private Sub 点我汇总_Click()
+
+Dim myPath$, myFile$, wb As Workbook, aRow&, tRow&, firstName$, secondName$
+Application.ScreenUpdating = False        '冻结屏幕，以防屏幕抖动
+myPath = ThisWorkbook.Path & "\分表\"          '把文件路径定义给变量
+myFile = Dir(myPath & "*.xls")            '依次找寻指定路径中的*.xls文件
+
+Do While myFile <> ""                     '当指定路径中有文件时进行循环
+   If myFile <> ThisWorkbook.Name Then
+      Set wb = Workbooks.Open(myPath & myFile)          '打开符合要求的文件
+      For Each ws In wb.Worksheets
+         If (ws.Name <> "合计" And ws.Name <> "打款明细") Then
+            For n = 1 To 1000
+                wb.Sheets(ws.Name).Cells(n, 2) = Trim(wb.Sheets(ws.Name).Cells(n, 2))
+            Next
+            Title = Replace(Replace(wb.Sheets(ws.Name).Cells(1, 1).Value, "发票明细表", ""), "发票费用明细表", "")
+            firstName = wb.Sheets(ws.Name).Cells(7, "b").Value
+            secondName = wb.Sheets(ws.Name).Cells(8, "b").Value
+            tRow = ThisWorkbook.Sheets(1).Range("b65536").End(xlUp).Row + 1
+            If tRow = 2 Then
+                tRow = 4
+            End If
+            If (Len(Trim(firstName)) > 0 And Len(Trim(secondName)) > 0) Then
+                aRow = wb.Sheets(ws.Name).Range("b7").End(xlDown).Row
+            ElseIf (Len(Trim(firstName)) > 0 And Len(Trim(secondName))) = 0 Then
+                aRow = 7
+            End If
+            wb.Sheets(ws.Name).Range("a7:aa" & aRow).Copy
+            ThisWorkbook.Sheets(1).Range("a" & tRow).PasteSpecial Paste:=xlPasteValues
+            Debug.Print tRow, aRow, Title
+            ThisWorkbook.Sheets(1).Range(Range("ac" & tRow), Range("ac" & (aRow))).Value = Title
+         End If
+      Next
+      
+      Workbooks(myFile).Close False               '关闭源工作簿,并不作修改
+   End If
+   myFile = Dir                                   '找寻下一个*.xls文件
+Loop
+   
+Application.ScreenUpdating = True                 '冻结屏幕,此类语句一般成对使用
+MsgBox "汇总完成，请查看！", 64, "提示"
+
+End Sub
+
